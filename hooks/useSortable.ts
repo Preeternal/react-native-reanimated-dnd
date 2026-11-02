@@ -240,8 +240,7 @@ export function useSortable<T>(
       }
       // Seed from the UI thread's current position without animating on mount.
       top.value = oldTop === null ? newTop : withSpring(newTop);
-    },
-    [isDynamicHeight, itemHeights, positions, id, effectiveItemHeight, estimatedItemHeight, movingSV]
+    }
   );
 
   // === Position change callback (onMove) ===
@@ -257,8 +256,7 @@ export function useSortable<T>(
       ) {
         scheduleOnRN(onMove, id, previousPosition, currentPosition);
       }
-    },
-    [movingSV, onMove]
+    }
   );
 
   // === Drag position tracking ===
@@ -362,24 +360,7 @@ export function useSortable<T>(
         effectiveItemHeight,
         autoScrollDirection
       );
-    },
-    [
-      movingSV,
-      effectiveItemHeight,
-      isDynamicHeight,
-      estimatedItemHeight,
-      itemsCount,
-      positions,
-      id,
-      onDragging,
-      lowerBound,
-      upperBound,
-      autoScrollDirection,
-      currentOverItemId,
-      top,
-      onDraggingLastCallTimestamp,
-      itemHeights,
-    ]
+    }
   );
 
   // === Auto-scroll handling ===
@@ -421,8 +402,7 @@ export function useSortable<T>(
           }
         }
       }
-    },
-    [isDynamicHeight, itemHeights, effectiveItemHeight, estimatedItemHeight, itemsCount, calculatedContainerHeight]
+    }
   );
 
   useAnimatedReaction(
@@ -437,8 +417,7 @@ export function useSortable<T>(
           lowerBound.value = targetLowerBoundValue;
         }
       }
-    },
-    [movingSV]
+    }
   );
 
   // === Pan gesture ===
