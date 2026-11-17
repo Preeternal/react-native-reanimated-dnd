@@ -397,7 +397,7 @@ export function useHorizontalSortable<T>(
       shadowOpacity: withSpring(movingSV.value ? 0.2 : 0),
       shadowRadius: 10,
     };
-  }, [movingSV, itemWidth]);
+  });
 
   return {
     animatedStyle,

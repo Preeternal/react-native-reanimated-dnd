@@ -503,7 +503,7 @@ export function useSortable<T>(
       shadowOpacity: withSpring(movingSV.value ? 0.2 : 0),
       shadowRadius: 10,
     };
-  }, [movingSV]);
+  });
 
   return {
     animatedStyle,

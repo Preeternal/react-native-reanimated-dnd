@@ -715,7 +715,7 @@ export const useDraggable = <TData = unknown>(
     return {
       transform: [{ translateX: tx.value }, { translateY: ty.value }] as const,
     };
-  }, [tx, ty]);
+  });
 
   // Replace the React useEffect with useAnimatedReaction to properly handle shared values
   useAnimatedReaction(

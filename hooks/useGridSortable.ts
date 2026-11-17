@@ -381,7 +381,7 @@ export function useGridSortable<T>(
       shadowRadius: 10,
       transform: [{ scale: withSpring(movingSV.value ? 1.05 : 1) }],
     };
-  }, [movingSV, isBeingRemoved, dimensions]);
+  });
 
   return {
     animatedStyle,
