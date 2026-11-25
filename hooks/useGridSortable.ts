@@ -164,8 +164,11 @@ export function useGridSortable<T>(
       setGridPosition(
         current.x,
         current.y,
-        scrollX.value,
-        scrollY.value,
+        // The drag coordinates already include scrollDelta from the gesture.
+        // Applying the current scroll offset here a second time shifts the
+        // target cell when the list is scrolled away from its ends.
+        0,
+        0,
         itemsCount,
         positions,
         id,
