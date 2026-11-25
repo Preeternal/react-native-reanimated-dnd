@@ -79,8 +79,6 @@ export function useGridSortable<T>(
   }
   const initialPosition = initialPositionRef.current;
 
-  const positionX = useSharedValue(initialPosition.x);
-  const positionY = useSharedValue(initialPosition.y);
   const topValue = useSharedValue(initialPosition.y);
   const leftValue = useSharedValue(initialPosition.x);
 
@@ -94,15 +92,35 @@ export function useGridSortable<T>(
   const initialFingerAbsoluteY = useSharedValue(0);
   const initialScrollY = useSharedValue(0);
   const initialScrollX = useSharedValue(0);
+  const fingerDelta = useSharedValue<{ x: number; y: number } | null>(null);
 
   const calculatedContainerHeight = useRef(containerHeight).current;
   const calculatedContainerWidth = useRef(containerWidth).current;
 
-  // React to position changes during drag (hit detection, reordering)
+  const getDragPosition = () => {
+    "worklet";
+    if (!movingSV.value || fingerDelta.value === null) {
+      return null;
+    }
+
+    const { x, y } = fingerDelta.value;
+    return {
+      x: initialItemContentX.value + x + (scrollX.value - initialScrollX.value),
+      y: initialItemContentY.value + y + (scrollY.value - initialScrollY.value),
+    };
+  };
+
+  const reorderAt = (x: number, y: number) => {
+    "worklet";
+    // The drag position is already in content coordinates.
+    setGridPosition(x, y, 0, 0, itemsCount, positions, id, dimensions, orientation, strategy);
+  };
+
+  // Both finger movement and auto-scroll can move the item within the content.
   useAnimatedReaction(
-    () => ({ x: positionX.value, y: positionY.value }),
+    getDragPosition,
     (current, previous) => {
-      if (!movingSV.value) {
+      if (current === null) {
         return;
       }
 
@@ -161,21 +179,7 @@ export function useGridSortable<T>(
       // Update visual position and logical positions
       topValue.value = current.y;
       leftValue.value = current.x;
-      setGridPosition(
-        current.x,
-        current.y,
-        // The drag coordinates already include scrollDelta from the gesture.
-        // Applying the current scroll offset here a second time shifts the
-        // target cell when the list is scrolled away from its ends.
-        0,
-        0,
-        itemsCount,
-        positions,
-        id,
-        dimensions,
-        orientation,
-        strategy
-      );
+      reorderAt(current.x, current.y);
       setGridAutoScroll(
         current.x,
         current.y,
@@ -307,8 +311,7 @@ export function useGridSortable<T>(
         initialScrollY.value = scrollY.value;
         initialScrollX.value = scrollX.value;
 
-        positionX.value = initialItemContentX.value;
-        positionY.value = initialItemContentY.value;
+        fingerDelta.value = null;
         movingSV.value = true;
         scheduleOnRN(setIsMoving, true);
 
@@ -318,18 +321,19 @@ export function useGridSortable<T>(
       })
       .onUpdate((event) => {
         "worklet";
-        const fingerDxScreen = event.absoluteX - initialFingerAbsoluteX.value;
-        const fingerDyScreen = event.absoluteY - initialFingerAbsoluteY.value;
-        const scrollDeltaY = scrollY.value - initialScrollY.value;
-        const scrollDeltaX = scrollX.value - initialScrollX.value;
-
-        positionX.value =
-          initialItemContentX.value + fingerDxScreen + scrollDeltaX;
-        positionY.value =
-          initialItemContentY.value + fingerDyScreen + scrollDeltaY;
+        fingerDelta.value = {
+          x: event.absoluteX - initialFingerAbsoluteX.value,
+          y: event.absoluteY - initialFingerAbsoluteY.value,
+        };
       })
-      .onFinalize(() => {
+      .onFinalize((_event, success) => {
         "worklet";
+        const current = getDragPosition();
+        if (success && current !== null) {
+          // A scroll update may arrive before the position reaction runs.
+          reorderAt(current.x, current.y);
+        }
+
         const finishPos = positions.value[id];
         if (finishPos) {
           topValue.value = withTiming(finishPos.y);
